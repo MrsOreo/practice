@@ -7,6 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ColorLens
@@ -46,7 +48,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainApp() {
     val navController = rememberNavController()
-    val context = LocalContext.current // ✅ Получаем Context здесь, в теле @Composable функции
+    val context = LocalContext.current
 
     Scaffold(
         bottomBar = {
@@ -58,20 +60,16 @@ fun MainApp() {
             startDestination = NavRoutes.MainScreen.route,
             modifier = Modifier.padding(padding)
         ) {
-            // Экран 1: Главный
             composable(NavRoutes.MainScreen.route) {
                 MainScreen(
                     onOpenSecondActivity = { colorName ->
-                        // 🚀 INTENT — переход на второй экран
-                        // ✅ Используем context из MainApp (не LocalContext.current внутри лямбды)
                         val intent = Intent(context, SecondActivity::class.java).apply {
-                            putExtra("KEY_COLOR", "Выбран цвет: $colorName") // 📦 Передаём данные
+                            putExtra("KEY_COLOR", "Выбран цвет: $colorName")
                         }
                         context.startActivity(intent)
                     }
                 )
             }
-            // Экран 2: Инфо
             composable(NavRoutes.InfoScreen.route) {
                 InfoScreen()
             }
@@ -102,7 +100,6 @@ fun BottomNavigationBar(navController: NavHostController) {
         )
     }
 }
-
 @Composable
 fun MainScreen(onOpenSecondActivity: (String) -> Unit) {
     var inputText by remember { mutableStateOf("") }
@@ -116,7 +113,6 @@ fun MainScreen(onOpenSecondActivity: (String) -> Unit) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Поле ввода
         OutlinedTextField(
             value = inputText,
             onValueChange = { inputText = it },
@@ -144,7 +140,7 @@ fun MainScreen(onOpenSecondActivity: (String) -> Unit) {
         Button(
             onClick = {
                 if (selectedColor.isNotEmpty()) {
-                    onOpenSecondActivity(selectedColor) // Вызываем лямбду с Intent
+                    onOpenSecondActivity(selectedColor)
                 }
             },
             modifier = Modifier
@@ -158,31 +154,35 @@ fun MainScreen(onOpenSecondActivity: (String) -> Unit) {
 
         Text("Доступные цвета:", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
-        colors.forEach { color ->
-            Text(
-                text = color,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        when (color) {
-                            "red" -> Color.Red
-                            "blue" -> Color.Blue
-                            "green" -> Color.Green
-                            "yellow" -> Color.Yellow
-                            "black" -> Color.Black
-                            "white" -> Color.White
-                            else -> Color.Gray
-                        },
-                        RoundedCornerShape(8.dp)
-                    )
-                    .padding(12.dp),
-                color = if (color == "black" || color == "blue") Color.White else Color.Black
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(colors, key = { it }) { color ->
+                Text(
+                    text = color,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            when (color) {
+                                "red" -> Color.Red
+                                "blue" -> Color.Blue
+                                "green" -> Color.Green
+                                "yellow" -> Color.Yellow
+                                "black" -> Color.Black
+                                "white" -> Color.White
+                                else -> Color.Gray
+                            },
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(12.dp),
+                    color = if (color == "black" || color == "blue") Color.White else Color.Black
+                )
+            }
         }
     }
 }
-
 @Composable
 fun InfoScreen() {
     Column(
@@ -197,7 +197,6 @@ fun InfoScreen() {
         Text("NavHost + NavController + Sealed Class")
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun MainAppPreview() {
